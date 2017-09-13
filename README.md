@@ -4,6 +4,8 @@ Super rough SceneKit port of [@thespite](https://twitter.com/thespite)'s [THREE.
 
 ![](http://c.mnmly.com/mLMy/MeshLineDemo.gif)
 
+![](http://c.mnmly.com/mUck/mesh-line-other.gif)
+
 ### Usage
 
 ```swift
