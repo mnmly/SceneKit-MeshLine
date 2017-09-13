@@ -34,6 +34,7 @@ struct CustomBuffer {
 
 struct VertexOut {
     float4 position [[ position ]];
+    float pointSize [[ point_size ]];
     float4 color;
     float2 texcoords;
     float counters;
@@ -91,13 +92,10 @@ vertex VertexOut vertexFunction(CustomBuffer _geometry [[ stage_in ]],
     float4 finalPosition = m * _geometry.position;
     float4 prevPos = m * float4( _geometry.normal, 1.0 );
     float4 nextPos = m * float4( _geometry.tangent.xyz, 1.0 );
-    float2 currentP = finalPosition.xy / finalPosition.w;
-    float2 prevP = prevPos.xy / prevPos.w;
-    float2 nextP = nextPos.xy / nextPos.w;
     
-    currentP *= aspect;
-    prevP *= aspect;
-    nextP *= aspect;
+    float2 currentP = fixPos(finalPosition, aspect);
+    float2 prevP = fixPos(prevPos, aspect);
+    float2 nextP = fixPos(nextPos, aspect);
     
     float pixelWidth = finalPosition.w * pixelWidthRatio;
     float w = 1.8 * pixelWidth * uniforms.lineWidth * width;
@@ -107,7 +105,7 @@ vertex VertexOut vertexFunction(CustomBuffer _geometry [[ stage_in ]],
     }
     
     float2 dir;
-    if ( nextP.x == currentP.x && nextP.y == currentP.y ) { dir = normalize( currentP - nextP ); }
+    if ( nextP.x == currentP.x && nextP.y == currentP.y ) { dir = normalize( currentP - prevP ); }
     else if ( prevP.x == currentP.x && prevP.y == currentP.y ) { dir = normalize( nextP - currentP ); }
     else {
         float2 dir1 = normalize( currentP - prevP );
@@ -118,9 +116,11 @@ vertex VertexOut vertexFunction(CustomBuffer _geometry [[ stage_in ]],
         //w = clamp( w / dot( miter, perp ), 0., 4. * lineWidth * width );
     }
     
-    float2 normal = ( cross( float3( dir, 0 ), float3( 0, 0, 1 ) ) ).xy;
+//    float2 normal = ( cross( float3( dir, 0 ), float3( 0, 0, 1 ) ) ).xy;
+    float2 normal = float2(-dir.y, dir.x);
     normal.x /= aspect;
     normal *= .5 * w;
+    
     float4 offset = float4( normal * side, 0.0, 1.0 );
     finalPosition.xy += offset.xy;
     VertexOut out;
@@ -128,6 +128,7 @@ vertex VertexOut vertexFunction(CustomBuffer _geometry [[ stage_in ]],
     out.color = float4( uniforms.color.xyz, uniforms.opacity );
     out.texcoords = _geometry.texcoords;
     out.counters = counters;
+    out.pointSize = 3.0;
     return out;
 };
 

@@ -71,9 +71,9 @@ public class MeshLineNode: SCNNode {
                 let position = v
                 let counter = c
                 let side = Float(k == 0 ? 1 : -1)
-                let width: Float = 0.01
+                let width: Float = 1
                 let uv = float2(Float(Float(index) / Float(l - 1)), k == 0 ? 0 : 1)
-                let previous = vertices[index == 0 ? (vertices[0] == vertices[l - 1] ? l - 2 : 0) : index - 1]
+                let previous = vertices[index == 0 ? (vertices[0] == vertices[l - 1] ? l - 2 : 0) : index]
                 let next = vertices[index < l - 1 ? index + 1 : vertices[l - 1] == vertices[0] ? 1 : l - 1]
  
                 attributes.append(Attribute(position: float3(Float(position.x), Float(position.y), Float(position.z)),
@@ -89,14 +89,14 @@ public class MeshLineNode: SCNNode {
         let count = l * 2
         let floatSize = MemoryLayout<Float>.size
         let stride = MemoryLayout<Attribute>.stride
-
+        let indicesData_ = NSData.init(bytes: &indices, length: MemoryLayout<UInt16>.stride * indices.count)
+        let indicesData = Data.init(referencing: indicesData_)
         let vertexSource    = SCNGeometrySource(data: data, semantic: .vertex, vectorCount: count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: floatSize, dataOffset: 0, dataStride: stride)
         let previousSource  = SCNGeometrySource(data: data, semantic: .normal, vectorCount: count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: floatSize, dataOffset: offsets[1], dataStride: stride)
         let nextSource      = SCNGeometrySource(data: data, semantic: .tangent, vectorCount: count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: floatSize, dataOffset: offsets[2], dataStride: stride)
         let tcoordSource    = SCNGeometrySource(data: data, semantic: .texcoord, vectorCount: count, usesFloatComponents: true, componentsPerVector: 2, bytesPerComponent: floatSize, dataOffset: offsets[3], dataStride: stride)
         let miscSource      = SCNGeometrySource(data: data, semantic: .boneWeights, vectorCount: count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: floatSize, dataOffset: offsets[4], dataStride: stride)
-        let indicesSource   = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        
+        let indicesSource = SCNGeometryElement.init(data: indicesData, primitiveType: .triangles, primitiveCount: indices.count / 3, bytesPerIndex: MemoryLayout<UInt16>.size)
         let sources = [vertexSource, tcoordSource, previousSource, nextSource, miscSource]
         geometry = SCNGeometry.init(sources: sources, elements: [indicesSource])
     }

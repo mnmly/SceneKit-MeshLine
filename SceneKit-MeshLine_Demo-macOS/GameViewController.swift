@@ -23,19 +23,19 @@ class GameViewController: NSViewController {
         for i in 0..<5 {
             let node = MeshLineNode()
             let material = MeshLineMaterial()
-            material.uniform.lineWidth = Float(i * 2 + 3)
+            material.uniform.lineWidth = 2.0 //Float(i * 2 + 3)
             material.update()
             var _vertices: [SCNVector3] = []
             for i in 0..<360 {
                 let phase = Float(i) / Float(360)
-                let x = (CGFloat(i) / 300.0 - 0.5) * 4.0;
-                let y = CGFloat(sin( phase * 20.0 ) * 0.1);
+                let x = (CGFloat(i) / 300.0 - 0.5) * 100.0;
+                let y = CGFloat(sin( phase * 20.0 ) * 5.1);
                 let z = CGFloat(cos( phase * 30.0) * 1.0 );
                 _vertices.append(SCNVector3(x: x, y: y, z: z))
             }
             node.setVertices(vertices: _vertices)
             node.geometry?.materials = [material]
-            node.position.y += CGFloat(i) * 1.0 - 2.5
+            node.position.y += (CGFloat(i) * 1.0 - 2.5) * 10.0
             lineNodes.append(node)
             lineMaterials.append(material)
             scene.rootNode.addChildNode(node)
@@ -63,6 +63,8 @@ class GameViewController: NSViewController {
         ambientLightNode.light!.type = .ambient
         ambientLightNode.light!.color = NSColor.darkGray
         scene.rootNode.addChildNode(ambientLightNode)
+        ambientLightNode.runAction(SCNAction.repeat(SCNAction.moveBy(x: 10.0, y: 0, z: 0, duration: 0.1), count: 1000))
+        
         
         // retrieve the SCNView
         let scnView = self.view as! SCNView
@@ -86,7 +88,9 @@ class GameViewController: NSViewController {
         scnView.gestureRecognizers = gestureRecognizers
         scnView.delegate = self
         scnView.loops = true
+        NotificationCenter.default.addObserver(self, selector: #selector(onResize), name: NSWindow.didResizeNotification, object: nil)
     }
+
     
     @objc
     func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -123,22 +127,23 @@ class GameViewController: NSViewController {
             SCNTransaction.commit()
         }
     }
+    
+    @objc func onResize() {
+        lineMaterials.forEach { (material) in
+            material.uniform.resolution = float2(Float(self.view.bounds.size.width), Float(self.view.bounds.size.height))
+            material.update()
+        }
+    }
 }
 
 
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        lineNodes.enumerated().forEach { (index, node) in
-            var _vertices: [SCNVector3] = []
-            for i in 0..<360 {
-                let phase = Float(i) / Float(360)
-                let x = (CGFloat(i) / 300.0 - 0.5) * 4.0;
-                let y = CGFloat(sin( phase * 50.0 + Float(time) * 5.2) * 0.1);
-                let z = CGFloat(cos( phase * 5.0 + Float(time) * 5.0 ) * 0.5 );
-                _vertices.append(SCNVector3(x: x, y: y, z: z))
-            }
-            lineNodes[index].setVertices(vertices: _vertices)
+
+        lineNodes.enumerated().forEach { (arg) in
+            let (index, node) = arg
+            lineMaterials[index].uniform.lineWidth = (sin( Float(time) * 1.0 ) + 1.0) / 2.0 * Float(index + 1) / 5.0 * 2.0;
+            lineMaterials[index].update()
         }
     }
 }
-

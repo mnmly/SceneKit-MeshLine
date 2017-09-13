@@ -146,6 +146,8 @@ class GameViewController: UIViewController {
     }
 }
 
+// MARK: SCNSceneRenderDelegate
+
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         lineNodes.enumerated().forEach { (index, node) in
